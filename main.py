@@ -3,7 +3,7 @@ import time
 import os
 
 
-def monitor_traffic(interface='eth0', log_file='/var/log/trafficinout.log'):
+def monitor_traffic(interface='eth0', log_file='trafficinout.log'):
     """
     Monitors incoming and outgoing traffic on a specified network interface continuously and logs it to a file.
 
@@ -36,7 +36,7 @@ def monitor_traffic(interface='eth0', log_file='/var/log/trafficinout.log'):
 
 if __name__ == '__main__':
     interface = input("Enter network interface to monitor (e.g., 'eth0', 'wlan0'): ")
-    log_file = '/var/log/trafficinout.log'
+    log_file = 'trafficinout.log'
 
     # Ensure the log file path is writable
     try:
