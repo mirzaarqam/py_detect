@@ -9,17 +9,17 @@ def parse_line(line):
         return match.groupdict()
     return None
 
-def filter_and_display(filename, dest_ip):
+def filter_and_display(filename):
     with open(filename, 'r') as file:
         for line in file:
             parsed = parse_line(line)
             if parsed and parsed['flags'] == 'S':
                 time = parsed['time']
                 src = f"{parsed['src_ip']}:{parsed['src_port']}"
-                if (dest_ip == parsed['dst_ip']):
-                    dst = f"{parsed['dst_ip']}:{parsed['dst_port']}"
-                    print(f"TIME: {time}, {src} > {dst}, FLAG: [S]")
+                dst = f"{parsed['dst_ip']}:{parsed['dst_port']}"
+                print(f"TIME: {time}, {src} > {dst}, FLAG: [S]")
+
 
 # Replace 'trafficinout.log' with the path to your log file if different
-destination_ip = input('Please Enter Destination IP: ')
-filter_and_display('trafficinout.log',  destination_ip)
+# destination_ip = input('Please Enter Destination IP: ')
+filter_and_display('trafficinout.log')
