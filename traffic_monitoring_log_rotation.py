@@ -32,8 +32,8 @@ def capture_traffic(interface):
                         log_file.write(log_entry + '\n')
 
             # Rotate log file: move it to the processed directory
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            new_log_file = f'{PROCESSED_DIR}/trafficdata_{timestamp}.log'
+            # timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            new_log_file = f'{PROCESSED_DIR}/trafficdata_file.log'
             os.rename(LOG_FILE, new_log_file)
             print(f"Moved log file to {new_log_file}")
 
