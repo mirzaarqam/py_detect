@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Search Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <style>
+        .pagination {
+            margin-top: 20px;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .ellipsis {
+            margin: 0 5px;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Search Results IP {{ip}} Port {{port}}</h1>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search...">
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Source IP</th>
+                    <th>Source Port</th>
+                    <th>Destination Port</th>
+                    <th>Flag</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {% for result in results %}
+                <tr>
+                    <td>{{ result.time }}</td>
+                    <td>{{ result.source_ip }}</td>
+                    <td>{{ result.source_port }}</td>
+                    <td>{{ result.destination_port }}</td>
+                    <td>{{ result.flag }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div id="pagination" class="pagination"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rowsPerPage = 10;
+            let currentPage = 1;
+            const tableBody = document.getElementById('tableBody');
+            const pagination = document.getElementById('pagination');
+            const searchInput = document.getElementById('searchInput');
+            let allRows = Array.from(tableBody.getElementsByTagName('tr'));
+            let filteredRows = [...allRows];
+
+            function renderTable(rows) {
+                tableBody.innerHTML = '';
+                rows.forEach(row => tableBody.appendChild(row));
+            }
+
+            function paginate(rows) {
+                const totalPages = Math.ceil(rows.length / rowsPerPage);
+                pagination.innerHTML = '';
+
+                // Create Previous Button
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = 'Previous';
+                prevBtn.className = 'btn btn-primary me-2';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        updateTable();
+                    }
+                });
+                pagination.appendChild(prevBtn);
+
+                // Create First Page Button
+                if (totalPages > 1 && currentPage > 3) {
+                    const firstBtn = document.createElement('button');
+                    firstBtn.textContent = '1';
+                    firstBtn.className = 'btn btn-primary me-2';
+                    firstBtn.addEventListener('click', () => {
+                        currentPage = 1;
+                        updateTable();
+                    });
+                    pagination.appendChild(firstBtn);
+
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.className = 'ellipsis';
+                    pagination.appendChild(ellipsis);
+                }
+
+                // Create Page Number Buttons
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.textContent = i;
+                    pageBtn.className = `btn ${i === currentPage ? 'btn-secondary' : 'btn-primary'} me-2`;
+                    pageBtn.addEventListener('click', () => {
+                        currentPage = i;
+                        updateTable();
+                    });
+                    pagination.appendChild(pageBtn);
+                }
+
+                // Create Ellipsis for the Middle
+                if (totalPages > endPage && currentPage < totalPages - 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.className = 'ellipsis';
+                    pagination.appendChild(ellipsis);
+                }
+
+                // Create Last Page Button
+                if (totalPages > 1 && currentPage < totalPages - 2) {
+                    const lastBtn = document.createElement('button');
+                    lastBtn.textContent = totalPages;
+                    lastBtn.className = 'btn btn-primary me-2';
+                    lastBtn.addEventListener('click', () => {
+                        currentPage = totalPages;
+                        updateTable();
+                    });
+                    pagination.appendChild(lastBtn);
+                }
+
+                // Create Next Button
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = 'Next';
+                nextBtn.className = 'btn btn-primary me-2';
+                nextBtn.disabled = currentPage === totalPages;
+                nextBtn.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        updateTable();
+                    }
+                });
+                pagination.appendChild(nextBtn);
+            }
+
+            function updateTable() {
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const currentRows = filteredRows.slice(start, end);
+                renderTable(currentRows);
+                paginate(filteredRows);
+            }
+
+            function filterTable() {
+                const searchText = searchInput.value.toLowerCase();
+                filteredRows = allRows.filter(row => {
+                    const cells = row.getElementsByTagName('td');
+                    return Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(searchText));
+                });
+                currentPage = 1;
+                updateTable();
+            }
+
+            searchInput.addEventListener('input', filterTable);
+
+            // Initial render
+            updateTable();
+        });
+    </script>
+</body>
+</html>

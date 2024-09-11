@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Logs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+     <style>
+        .pagination {
+            margin-top: 20px;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .ellipsis {
+            margin: 0 5px;
+            cursor: default;
+        }
+         .main-container{
+             margin-left: 60px;
+            margin-right: 60px;
+         }
+    </style>
+</head>
+<body>
+<!--    <div class="container">-->
+<!--        <h2 class="mt-5">Search Logs</h2>-->
+
+<!--        <form method="POST" action="/search">-->
+<!--            <div class="mb-3">-->
+<!--                <label for="from_time" class="form-label">From Time:</label>-->
+<!--                <input type="datetime-local" id="from_time" name="from_time" class="form-control"-->
+<!--                       value="{{ first_time[:16] }}"-->
+<!--                       min="{{ first_time[:16] }}"-->
+<!--                       max="{{ last_time[:16] }}"-->
+<!--                       required>-->
+<!--            </div>-->
+
+<!--            <div class="mb-3">-->
+<!--                <label for="to_time" class="form-label">To Time:</label>-->
+<!--                <input type="datetime-local" id="to_time" name="to_time" class="form-control"-->
+<!--                       value="{{ last_time[:16] }}"-->
+<!--                       min="{{ first_time[:16] }}"-->
+<!--                       max="{{ last_time[:16] }}"-->
+<!--                       required>-->
+<!--            </div>-->
+
+<!--            <div class="mb-3">-->
+<!--                <label for="ip" class="form-label">IP Address:</label>-->
+<!--                <input type="text" id="ip" name="ip" class="form-control" placeholder="Enter IP address" required>-->
+<!--            </div>-->
+<!--            <div class="mb-3">-->
+<!--                <label for="ip" class="form-label">Port:</label>-->
+<!--                <input type="text" id="port" name="port" class="form-control" placeholder="Enter Port">-->
+<!--            </div>-->
+
+<!--            <button type="submit" class="btn btn-primary">Search</button>-->
+<!--        </form>-->
+<!--    </div>-->
+
+ <div class="container-fluid main-container mt-5">
+        <h2>Search Logs</h2>
+        <div class="row">
+            <!-- Search Form -->
+            <div class="col-md-3">
+                <form id="searchForm">
+                    <div class="mb-3">
+                        <label for="from_time" class="form-label">From Time:</label>
+                        <input type="datetime-local" id="from_time" name="from_time" class="form-control"
+                               value="{{ first_time[:16] }}"
+                               min="{{ first_time[:16] }}"
+                               max="{{ last_time[:16] }}"
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="to_time" class="form-label">To Time:</label>
+                        <input type="datetime-local" id="to_time" name="to_time" class="form-control"
+                               value="{{ last_time[:16] }}"
+                               min="{{ first_time[:16] }}"
+                               max="{{ last_time[:16] }}"
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ip" class="form-label">IP Address:</label>
+                        <input type="text" id="ip" name="ip" class="form-control" placeholder="Enter IP address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="port" class="form-label">Port:</label>
+                        <input type="text" id="port" name="port" class="form-control" placeholder="Enter Port">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+
+            <!-- Results Table and Pagination -->
+            <div class="col-md-8">
+                <h4 class="mb-3">Search Results</h4>
+                <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search in results">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Source IP</th>
+                            <th>Source Port</th>
+                            <th>Destination Port</th>
+                            <th>Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Rows will be dynamically added here -->
+                    </tbody>
+                </table>
+                <div id="pagination" class="d-flex justify-content-center">
+                    <!-- Pagination buttons will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script>
+        // JavaScript to ensure "To Time" is always after "From Time"
+        const fromTimeInput = document.getElementById('from_time');
+        const toTimeInput = document.getElementById('to_time');
+
+        fromTimeInput.addEventListener('change', function () {
+            // Set the min value of "To Time" based on the selected "From Time"
+            toTimeInput.min = fromTimeInput.value;
+        });
+
+        toTimeInput.addEventListener('change', function () {
+            // Set the max value of "From Time" based on the selected "To Time"
+            fromTimeInput.max = toTimeInput.value;
+        });
+    </script>
+
+
+ <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rowsPerPage = 10;
+            let currentPage = 1;
+            const tableBody = document.getElementById('tableBody');
+            const pagination = document.getElementById('pagination');
+            const searchInput = document.getElementById('searchInput');
+            let allRows = [];
+            let filteredRows = [];
+
+            // Function to render table rows
+            function renderTable(rows) {
+                tableBody.innerHTML = '';
+                rows.forEach(row => tableBody.appendChild(row));
+            }
+
+            // Function to create pagination buttons
+            function paginate(rows) {
+                const totalPages = Math.ceil(rows.length / rowsPerPage);
+                pagination.innerHTML = '';
+
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = 'Previous';
+                prevBtn.className = 'btn btn-primary me-2';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        updateTable();
+                    }
+                });
+                pagination.appendChild(prevBtn);
+
+                if (totalPages > 1 && currentPage > 3) {
+                    const firstBtn = document.createElement('button');
+                    firstBtn.textContent = '1';
+                    firstBtn.className = 'btn btn-primary me-2';
+                    firstBtn.addEventListener('click', () => {
+                        currentPage = 1;
+                        updateTable();
+                    });
+                    pagination.appendChild(firstBtn);
+
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.className = 'ellipsis';
+                    pagination.appendChild(ellipsis);
+                }
+
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.textContent = i;
+                    pageBtn.className = `btn ${i === currentPage ? 'btn-secondary' : 'btn-primary'} me-2`;
+                    pageBtn.addEventListener('click', () => {
+                        currentPage = i;
+                        updateTable();
+                    });
+                    pagination.appendChild(pageBtn);
+                }
+
+                if (totalPages > endPage && currentPage < totalPages - 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.className = 'ellipsis';
+                    pagination.appendChild(ellipsis);
+                }
+
+                if (totalPages > 1 && currentPage < totalPages - 2) {
+                    const lastBtn = document.createElement('button');
+                    lastBtn.textContent = totalPages;
+                    lastBtn.className = 'btn btn-primary me-2';
+                    lastBtn.addEventListener('click', () => {
+                        currentPage = totalPages;
+                        updateTable();
+                    });
+                    pagination.appendChild(lastBtn);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = 'Next';
+                nextBtn.className = 'btn btn-primary me-2';
+                nextBtn.disabled = currentPage === totalPages;
+                nextBtn.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        updateTable();
+                    }
+                });
+                pagination.appendChild(nextBtn);
+            }
+
+            function updateTable() {
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const currentRows = filteredRows.slice(start, end);
+                renderTable(currentRows);
+                paginate(filteredRows);
+            }
+
+            function filterTable() {
+                const searchText = searchInput.value.toLowerCase();
+                filteredRows = allRows.filter(row => {
+                    const cells = row.getElementsByTagName('td');
+                    return Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(searchText));
+                });
+                currentPage = 1;
+                updateTable();
+            }
+
+            searchInput.addEventListener('input', filterTable);
+
+            // Handle form submission
+            $('#searchForm').on('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                const formData = $(this).serialize(); // Serialize the form data
+
+                $.ajax({
+                    url: '/search',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        // Process the response and set up the table
+                        allRows = response.map(row => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${row.time}</td>
+                                <td>${row.source_ip}</td>
+                                <td>${row.source_port}</td>
+                                <td>${row.destination_port}</td>
+                                <td>${row.flag}</td>
+                            `;
+                            return tr;
+                        });
+                        filteredRows = [...allRows];
+                        currentPage = 1;
+                        updateTable();
+                    },
+                    error: function() {
+                        alert('An error occurred while fetching the data.');
+                    }
+                });
+            });
+        });
+    </script>
+
+
+
+
+
+
+</body>
+</html>
