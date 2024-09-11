@@ -101,6 +101,12 @@
             <div class="col-md-8">
                 <h4 class="mb-3">Search Results</h4>
                 <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search in results">
+                <select id="per_page" onchange="update_table_row()" style="    float: right;">
+                    <option value="10">10</option>
+                     <option value="25">25</option>
+                     <option value="100">100</option>
+                     <option value="500">500</option>
+                    </select>
                 <table class="table table-bordered">
                     <thead>
                         <tr>
@@ -143,14 +149,15 @@
 
 
  <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const rowsPerPage = 10;
+     const rowsPerPage = 10;
             let currentPage = 1;
-            const tableBody = document.getElementById('tableBody');
-            const pagination = document.getElementById('pagination');
-            const searchInput = document.getElementById('searchInput');
+            var tableBody = document.getElementById('tableBody');
+            var pagination = document.getElementById('pagination');
+            var searchInput = document.getElementById('searchInput');
             let allRows = [];
             let filteredRows = [];
+
+
 
             // Function to render table rows
             function renderTable(rows) {
@@ -236,7 +243,7 @@
                 pagination.appendChild(nextBtn);
             }
 
-            function updateTable() {
+            function updateTable(rowsPerPage=10) {
                 const start = (currentPage - 1) * rowsPerPage;
                 const end = start + rowsPerPage;
                 const currentRows = filteredRows.slice(start, end);
@@ -288,7 +295,20 @@
                     }
                 });
             });
-        });
+             function update_table_row(){
+
+             var per_page_row=document.getElementById("per_page").value;
+             console.log(per_page_row);
+             updateTable(per_page_row);
+
+
+             }
+
+
+
+
+
+
     </script>
 
 
